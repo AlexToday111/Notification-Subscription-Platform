@@ -1,13 +1,26 @@
 server:
   port: 8080
+
 app:
-  name: notification-platform
-  version: 0.0.1
+  name: ${APP_NAME:notification-platform}
+  version: ${APP_VERSION:dev}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/notification}
+    username: ${SPRING_DATASOURCE_USERNAME:notification}
+    password: ${SPRING_DATASOURCE_PASSWORD:notification}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
 management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health,info
   endpoint:
     health:
       show-details: always

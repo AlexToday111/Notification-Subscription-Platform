@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16
+    container_name: notification-db
+    environment:
+      POSTGRES_DB: notification
+      POSTGRES_USER: notification
+      POSTGRES_PASSWORD: notification
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification -d notification"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notification-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Spring datasource через env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/notification
+      SPRING_DATASOURCE_USERNAME: notification
+      SPRING_DATASOURCE_PASSWORD: notification
+
+      # JPA/Flyway можно оставить здесь или в application.yml
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+      SPRING_FLYWAY_ENABLED: "true"
+
+      # твои свойства
+      APP_NAME: notification-platform
+      APP_VERSION: 0.0.1
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
