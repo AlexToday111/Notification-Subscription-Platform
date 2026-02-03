@@ -67,7 +67,7 @@ public class Notification {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public static Notification newFrom(Event event, Subscription subscription, String content) {
+    public static Notification newFrom(AppEvent event, Subscription subscription, String content) {
         if (event == null) throw new IllegalArgumentException("event is null");
         if (subscription == null) throw new IllegalArgumentException("subscription is null");
         if (content == null || content.isBlank()) throw new IllegalArgumentException("content is blank");

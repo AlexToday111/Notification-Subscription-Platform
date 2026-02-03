@@ -34,7 +34,7 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    public User(UUID id, String email, String name, Instant createdAt) {
+    public User(String email, String name) {
         this.id = id;
         this.email = email;
         this.name = name;
