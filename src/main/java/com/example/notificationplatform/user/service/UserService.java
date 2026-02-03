@@ -3,6 +3,7 @@ package com.example.notificationplatform.user.service;
 import com.example.notificationplatform.user.domain.User;
 import com.example.notificationplatform.user.repo.UserRepository;
 import com.example.notificationplatform.user.service.command.CreateUserCommand;
+import com.example.notificationplatform.shared.error.NotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +38,6 @@ public class UserService {
     @Transactional(Transactional.TxType.SUPPORTS)
     public User get(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("User not found: " + id));
+                .orElseThrow(() -> new NotFoundException("User not found: " + id));
     }
 }

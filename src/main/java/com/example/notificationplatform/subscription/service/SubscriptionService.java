@@ -3,6 +3,7 @@ package com.example.notificationplatform.subscription.service;
 import com.example.notificationplatform.subscription.domain.Subscription;
 import com.example.notificationplatform.subscription.repo.SubscriptionRepository;
 import com.example.notificationplatform.subscription.service.command.CreateSubscriptionCommand;
+import com.example.notificationplatform.shared.error.NotFoundException;
 import com.example.notificationplatform.user.domain.User;
 import com.example.notificationplatform.user.repo.UserRepository;
 import jakarta.transaction.Transactional;
@@ -32,7 +33,7 @@ public class SubscriptionService {
         if (cmd.destination() == null || cmd.destination().isBlank()) throw new IllegalArgumentException("destination is blank");
 
         User user = userRepository.findById(cmd.userId())
-                .orElseThrow(() -> new IllegalStateException("User not found: " + cmd.userId()));
+                .orElseThrow(() -> new NotFoundException("User not found: " + cmd.userId()));
 
         String destination = cmd.destination().trim();
         if (!cmd.channel().isValidDestination(destination)) {
