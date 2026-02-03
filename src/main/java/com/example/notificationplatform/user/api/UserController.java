@@ -24,11 +24,16 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest req) {
-        User created = userService.create(new CreateUserCommand(req.email(), req.email()));
+
+        CreateUserCommand cmd = new CreateUserCommand(req.email(), req.name());
+
+        User created = userService.create(cmd);
+
         return ResponseEntity
-                .created((URI.create("/api/users/" + created.getId)))
+                .created(URI.create("/api/users/" + created.getId()))
                 .body(UserMapper.toResponse(created));
     }
+
 
     @GetMapping("/{id}")
     public UserResponse get(@PathVariable UUID id) {

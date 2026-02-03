@@ -26,14 +26,21 @@ public class SubscriptionController {
 
     @PostMapping("/subscriptions")
     public ResponseEntity<SubscriptionResponse> create(@Valid @RequestBody CreateSubscriptionRequest req) {
-        Subscription created = subscriptionService.create(
-                new CreateSubscriptionCommand(req.userId(), req.eventType(), req.channel(), req.destination())
+
+        CreateSubscriptionCommand cmd = new CreateSubscriptionCommand(
+                req.userId(),
+                req.eventType(),
+                req.channel(),
+                req.destination()
         );
+
+        Subscription created = subscriptionService.create(cmd);
 
         return ResponseEntity
                 .created(URI.create("/api/subscriptions/" + created.getId()))
                 .body(SubscriptionMapper.toResponse(created));
     }
+
 
     @GetMapping("/users/{userId}/subscriptions")
     public List<SubscriptionResponse> listByUser(@PathVariable UUID userId) {

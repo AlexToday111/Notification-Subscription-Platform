@@ -24,10 +24,18 @@ public class EventController {
 
     @PostMapping
     public ResponseEntity<AppEventResponse> publish(@Valid @RequestBody PublishEventRequest req) {
-        AppEvent created = eventService.publish(new PublishEventCommand(req.type(), req.payload(), req.source()));
+
+        PublishEventCommand cmd = new PublishEventCommand(
+                req.type(),
+                req.payload(),
+                req.source()
+        );
+
+        AppEvent created = eventService.publish(cmd);
 
         return ResponseEntity
                 .created(URI.create("/api/events/" + created.getId()))
                 .body(AppEventMapper.toResponse(created));
     }
+
 }

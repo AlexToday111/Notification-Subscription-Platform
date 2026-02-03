@@ -36,11 +36,17 @@ public class SubscriptionService {
 
         String destination = cmd.destination().trim();
         if (!cmd.channel().isValidDestination(destination)) {
-            throw new IllegalArgumentException("Invalid destination for channel " + cmd.channel() + ": " + destination);
+            throw new IllegalArgumentException("Invalid destination for channel " + cmd.channel());
         }
 
-        Subscription subscription = new Subscription(user, cmd.eventType(), cmd.channel(), destination);
-        return subscriptionRepository.save(subscription);
+        Subscription entity = new Subscription(
+                user,
+                cmd.eventType(),
+                cmd.channel(),
+                destination
+        );
+
+        return subscriptionRepository.save(entity);
     }
 
     @Transactional(Transactional.TxType.SUPPORTS)
