@@ -3,7 +3,7 @@ package com.example.notificationplatform.event.domain;
 
 import java.util.Locale;
 
-public class EventType {
+public enum EventType {
 
     USER_REGISTERED("User registered"),
     PRICE_ALERT("Price alert triggered"),
