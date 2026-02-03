@@ -35,10 +35,13 @@ public class User {
     private Instant createdAt;
 
     public User(String email, String name) {
-        this.id = id;
-        this.email = email;
-        this.name = name;
-        this.createdAt = createdAt;
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("email is blank");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("name is blank");
+
+        this.id = UUID.randomUUID();
+        this.email = normalizeEmail(email);
+        this.name = name.trim();
+        this.createdAt = Instant.now();
     }
 
     private static String normalizeEmail(String email){
@@ -50,6 +53,6 @@ public class User {
         if (newName == null || newName.isBlank()){
             throw new IllegalArgumentException("name is blank");
         }
-        this.name = name;
+        this.name = newName.trim();
     }
 }

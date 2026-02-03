@@ -1,10 +1,10 @@
 package com.example.notificationplatform.notification.domain;
 
+import com.example.notificationplatform.event.domain.AppEvent;
 import com.example.notificationplatform.subscription.domain.Channel;
 import com.example.notificationplatform.subscription.domain.Subscription;
 import com.example.notificationplatform.user.domain.User;
 import jakarta.persistence.*;
-import jdk.jfr.Event;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,7 +36,7 @@ public class Notification {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "event_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_notifications_event"))
-    private Event event;
+    private AppEvent event;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_id",
@@ -66,7 +66,7 @@ public class Notification {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public static Notification newFrom(Event event, Subscription subscription, String content) {
+    public static Notification newFrom(AppEvent event, Subscription subscription, String content) {
         if (event == null) throw new IllegalArgumentException("event is null");
         if (subscription == null) throw new IllegalArgumentException("subscription is null");
         if (content == null || content.isBlank()) throw new IllegalArgumentException("content is blank");

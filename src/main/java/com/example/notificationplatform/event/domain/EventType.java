@@ -26,24 +26,24 @@ public enum EventType {
      * "price-alert"
      * "PriceAlert"
      */
-    public static EventType from (String raw){
-        if (raw == null || raw.isBlank()){
+    public static EventType from(String raw) {
+        if (raw == null || raw.isBlank()) {
             throw new IllegalArgumentException("EventType is blank");
         }
         String normalized = normalize(raw);
-        for (EventType t : values()){
-            if (t.name().equals(normalized)){
+        for (EventType t : values()) {
+            if (t.name().equals(normalized)) {
                 return t;
             }
         }
-        throw new IllegalArgumentException("Uknown EventType: " + raw);
+        throw new IllegalArgumentException("Unknown EventType: " + raw);
     }
-    private static String normalize(String raw){
+    private static String normalize(String raw) {
         String s = raw.trim()
                 .replace('-', '_')
                 .replace(' ', '_')
                 .toUpperCase(Locale.ROOT);
-        while (s.contains("__")){
+        while (s.contains("__")) {
             s = s.replace("__", "_");
         }
         return s;
