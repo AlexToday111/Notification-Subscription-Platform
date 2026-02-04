@@ -15,6 +15,11 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
 
 management:
   endpoints:
