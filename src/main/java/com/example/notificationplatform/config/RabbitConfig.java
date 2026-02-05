@@ -14,8 +14,9 @@ public class RabbitConfig {
     public static final String EVENTS_EXCHANGE = "app.events";
     public static final String EVENTS_QUEUE = "events.queue";
     public static final String EVENTS_ROUTING_KEY = "event.occurred";
-    private static final String DELIVERY_QUEUE = "delivery";
-    private static final String DELIVERY_DLQ_QUEUE = "delivery.dlq";
+    public static final String DELIVERY_QUEUE = "delivery";
+    public static final String DELIVERY_DLQ_QUEUE = "delivery.dlq";
+    public static final String DELIVERY_RETRY_QUEUE = "delivery.retry";
 
     @Bean
     public TopicExchange eventsExchange() {
@@ -34,12 +35,22 @@ public class RabbitConfig {
 
     @Bean
     public Queue deliveryQueue() {
-        return new Queue(DELIVERY_QUEUE, true);
+        return QueueBuilder.durable(DELIVERY_QUEUE)
+                .build();
     }
 
     @Bean
     public Queue deliveryDlqQueue() {
-        return new Queue(DELIVERY_DLQ_QUEUE, true);
+        return QueueBuilder.durable(DELIVERY_DLQ_QUEUE).build();
+    }
+
+    @Bean
+    public Queue deliveryRetryQueue(){
+        return QueueBuilder.durable(DELIVERY_RETRY_QUEUE)
+                .withArgument("x-message-ttl", 10_000)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-kry", DELIVERY_QUEUE)
+                .build();
     }
 
     @Bean
