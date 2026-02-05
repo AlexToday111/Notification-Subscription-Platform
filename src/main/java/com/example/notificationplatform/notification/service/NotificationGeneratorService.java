@@ -1,8 +1,9 @@
-package com.example.notificationplatform.messaging;
+package com.example.notificationplatform.notification.service;
 
 import com.example.notificationplatform.event.domain.AppEvent;
 import com.example.notificationplatform.event.domain.EventType;
 import com.example.notificationplatform.event.repo.AppEventRepository;
+import com.example.notificationplatform.messaging.producer.EventOccurredMessage;
 import com.example.notificationplatform.notification.domain.Notification;
 import com.example.notificationplatform.notification.repo.NotificationRepository;
 import com.example.notificationplatform.subscription.domain.Subscription;
@@ -67,3 +68,4 @@ public class NotificationGeneratorService {
         }
     }
 }
+

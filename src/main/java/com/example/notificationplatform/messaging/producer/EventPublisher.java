@@ -1,4 +1,4 @@
-package com.example.notificationplatform.messaging;
+package com.example.notificationplatform.messaging.producer;
 
 import com.example.notificationplatform.config.RabbitConfig;
 import lombok.RequiredArgsConstructor;
@@ -18,3 +18,4 @@ public class EventPublisher {
         );
     }
 }
+

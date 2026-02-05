@@ -1,4 +1,4 @@
-package com.example.notificationplatform.messaging;
+package com.example.notificationplatform.messaging.producer;
 
 import java.time.Instant;
 import java.util.Map;
@@ -10,3 +10,4 @@ public record EventOccurredMessage(
         Map<String, Object> payload
 ) {
 }
+

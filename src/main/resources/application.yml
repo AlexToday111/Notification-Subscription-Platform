@@ -10,11 +10,12 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/notification}
     username: ${SPRING_DATASOURCE_USERNAME:notification}
     password: ${SPRING_DATASOURCE_PASSWORD:notification}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
   jpa:
     hibernate:
       ddl-auto: validate
-  flyway:
-    enabled: true
   rabbitmq:
     host: rabbitmq
     port: 5672

@@ -3,8 +3,8 @@ package com.example.notificationplatform.event.service;
 import com.example.notificationplatform.event.domain.AppEvent;
 import com.example.notificationplatform.event.repo.AppEventRepository;
 import com.example.notificationplatform.event.service.command.PublishEventCommand;
-import com.example.notificationplatform.messaging.EventOccurredMessage;
-import com.example.notificationplatform.messaging.EventPublisher;
+import com.example.notificationplatform.messaging.producer.EventOccurredMessage;
+import com.example.notificationplatform.messaging.producer.EventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
