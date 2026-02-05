@@ -126,6 +126,12 @@ public class Notification {
         touch();
     }
 
+    public void registerRetry(String error) {
+        this.retryCount++;
+        this.status = NotificationStatus.RETRYING;
+        this.errorMessage = sanitize(error);
+        touch();
+    }
 
     private void touch() {
         this.updatedAt = Instant.now();

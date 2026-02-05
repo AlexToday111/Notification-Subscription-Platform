@@ -4,7 +4,6 @@ import com.example.notificationplatform.messaging.producer.DeliveryPublisher;
 import com.example.notificationplatform.messaging.producer.NotificationFailedMessage;
 import com.example.notificationplatform.notification.domain.Notification;
 import com.example.notificationplatform.notification.repo.NotificationRepository;
-import com.example.notificationplatform.notification.service.delivery.NotificationSenderRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
@@ -40,17 +39,16 @@ public class NotificationDeliveryService {
 
             n.markSent();
         } catch (Exception e) {
-            n.incrementRetry(e.getMessage());
-
-            if (n.getRetryCount() < MAX_RETRIES) {
-                n.markRetrying(e.getMessage());
+            String err = e.getMessage();
+            if (n.getRetryCount() + 1 < MAX_RETRIES) {
+                n.markRetrying(err);
                 deliveryPublisher.publish(n.getId());
             } else {
+                n.incrementRetry(err);
+                n.markFailed(err);
                 n.markFailed(e.getMessage());
-                rabbitTemplate.convertAndSend(
-                        DELIVERY_DLQ_QUEUE,
-                        NotificationFailedMessage.of(n.getId(), e.getMessage(), n.getRetryCount())
-                );
+                rabbitTemplate.convertAndSend(DELIVERY_DLQ_QUEUE,
+                        NotificationFailedMessage.of(n.getId(), err, n.getRetryCount()));
             }
         }
     }
