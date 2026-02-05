@@ -2,7 +2,7 @@ package com.example.notificationplatform.messaging.consumer;
 
 import com.example.notificationplatform.config.RabbitConfig;
 import com.example.notificationplatform.messaging.producer.EventOccurredMessage;
-import com.example.notificationplatform.notification.service.NotificationGeneratorService;
+import com.example.notificationplatform.notification.service.generation.NotificationGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

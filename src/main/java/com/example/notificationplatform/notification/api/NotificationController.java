@@ -2,7 +2,7 @@ package com.example.notificationplatform.notification.api;
 
 import com.example.notificationplatform.notification.api.dto.NotificationResponse;
 import com.example.notificationplatform.notification.api.mapper.NotificationMapper;
-import com.example.notificationplatform.notification.service.NotificationQueryService;
+import com.example.notificationplatform.notification.service.query.NotificationQueryService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

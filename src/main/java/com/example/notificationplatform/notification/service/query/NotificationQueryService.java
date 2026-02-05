@@ -1,4 +1,4 @@
-package com.example.notificationplatform.notification.service;
+package com.example.notificationplatform.notification.service.query;
 
 import com.example.notificationplatform.notification.domain.Notification;
 import com.example.notificationplatform.notification.repo.NotificationRepository;

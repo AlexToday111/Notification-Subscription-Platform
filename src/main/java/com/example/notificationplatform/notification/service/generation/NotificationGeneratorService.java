@@ -1,4 +1,4 @@
-package com.example.notificationplatform.notification.service;
+package com.example.notificationplatform.notification.service.generation;
 
 import com.example.notificationplatform.event.domain.AppEvent;
 import com.example.notificationplatform.event.domain.EventType;
