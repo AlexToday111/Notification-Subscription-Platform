@@ -4,6 +4,7 @@ public enum NotificationStatus{
     NEW,
     SENDING,
     SENT,
+    RETRYING,
     FAILED;
 
     public boolean isTerminal(){

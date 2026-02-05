@@ -60,6 +60,9 @@ public class Notification {
     @Column(name = "error_message", length = 1000)
     private String errorMessage;
 
+    @Column(name = "retry_count", nullable = false)
+    private int retryCount;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -80,9 +83,25 @@ public class Notification {
         n.destination = subscription.getDestination();
         n.status = NotificationStatus.NEW;
         n.content = content.trim();
+        n.retryCount = 0;
         n.createdAt = Instant.now();
         n.updatedAt = n.createdAt;
         return n;
+    }
+
+    public void markSent() {
+        if (this.status == NotificationStatus.SENT){
+            return;
+        }
+        this.status = NotificationStatus.SENT;
+        this.errorMessage = null;
+        touch();
+    }
+
+    public void markRetrying(String error){
+        this.status = NotificationStatus.RETRYING;
+        this.errorMessage = sanitize(error);
+        touch();
     }
 
     public void markSending() {
@@ -90,19 +109,47 @@ public class Notification {
         touch();
     }
 
-    public void markSent() {
-        this.status = NotificationStatus.SENT;
-        this.errorMessage = null;
+    public void incrementRetry(String error) {
+        this.retryCount++;
+        this.errorMessage = sanitize(error);
         touch();
     }
 
-    public void markFailed(String errorMessage) {
+    public boolean isSent() {
+        return this.status == NotificationStatus.SENT;
+    }
+
+    public void markFailed(String error) {
+        if (isSent()) return;
         this.status = NotificationStatus.FAILED;
-        this.errorMessage = (errorMessage == null ? null : errorMessage.trim());
+        this.errorMessage = sanitize(error);
+        touch();
+    }
+
+    public void registerRetry(String error) {
+        this.retryCount++;
+        this.status = NotificationStatus.RETRYING;
+        this.errorMessage = sanitize(error);
         touch();
     }
 
     private void touch() {
         this.updatedAt = Instant.now();
     }
+
+    private String sanitize(String error) {
+        return error == null ? null : error.trim();
+    }
+
+    public void registerFailureAndRetry(String error) {
+        if (isSent()) return;
+        this.retryCount++;
+        this.status = NotificationStatus.RETRYING;
+        this.errorMessage = sanitize(error);
+        touch();
+    }
+    public boolean isTerminal() {
+        return this.status == NotificationStatus.SENT || this.status == NotificationStatus.FAILED;
+    }
+
 }
