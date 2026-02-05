@@ -1,6 +1,5 @@
 package com.example.notificationplatform.messaging.consumer;
 
-import com.example.notificationplatform.messaging.producer.DeliveryPublisher;
 import com.example.notificationplatform.messaging.producer.DeliveryRequestMessage;
 import com.example.notificationplatform.notification.service.delivery.NotificationDeliveryService;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DeliveryConsumer {
 
-    private final NotificationDeliveryService notificationDeliveryService;
+    private final NotificationDeliveryService deliveryService;
 
-    @RabbitListener(queues = DeliveryPublisher.DELIVERY_QUEUE)
+    @RabbitListener(queues = "delivery")
     public void consume(DeliveryRequestMessage message) {
-        notificationDeliveryService.deliver(message.notificationId());
+        deliveryService.deliver(message.notificationId());
     }
 }

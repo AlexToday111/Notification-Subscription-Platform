@@ -14,6 +14,8 @@ public class RabbitConfig {
     public static final String EVENTS_EXCHANGE = "app.events";
     public static final String EVENTS_QUEUE = "events.queue";
     public static final String EVENTS_ROUTING_KEY = "event.occurred";
+    private static final String DELIVERY_QUEUE = "delivery";
+    private static final String DELIVERY_DLQ_QUEUE = "delivery.dlq";
 
     @Bean
     public TopicExchange eventsExchange() {
@@ -29,6 +31,17 @@ public class RabbitConfig {
     public Binding eventsBinding(Queue eventsQueue, TopicExchange eventsExchange) {
         return BindingBuilder.bind(eventsQueue).to(eventsExchange).with("event.*");
     }
+
+    @Bean
+    public Queue deliveryQueue() {
+        return new Queue(DELIVERY_QUEUE, true);
+    }
+
+    @Bean
+    public Queue deliveryDlqQueue() {
+        return new Queue(DELIVERY_DLQ_QUEUE, true);
+    }
+
     @Bean
     public Jackson2JsonMessageConverter jackson2JsonMessageConverter(ObjectMapper objectMapper) {
         return new Jackson2JsonMessageConverter(objectMapper);
