@@ -63,6 +63,10 @@ services:
       - ./grafana/provisioning/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
 
 volumes:
   pgdata:

@@ -3,6 +3,7 @@ package com.example.notificationplatform.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -45,11 +46,11 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Queue deliveryRetryQueue(){
+    public Queue deliveryRetryQueue() {
         return QueueBuilder.durable(DELIVERY_RETRY_QUEUE)
                 .withArgument("x-message-ttl", 10_000)
                 .withArgument("x-dead-letter-exchange", "")
-                .withArgument("x-dead-letter-routing-kry", DELIVERY_QUEUE)
+                .withArgument("x-dead-letter-routing-key", DELIVERY_QUEUE)
                 .build();
     }
 
@@ -65,7 +66,21 @@ public class RabbitConfig {
     ) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(converter);
+        template.setObservationEnabled(true);
         return template;
+    }
+
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            Jackson2JsonMessageConverter converter
+    ) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(converter);
+        factory.setObservationEnabled(true);
+        return factory;
     }
 }
 
