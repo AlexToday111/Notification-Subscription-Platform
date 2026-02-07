@@ -1,9 +1,34 @@
-server:
-  port: 8080
+management:
+  server:
+    port: 8080
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+    export:
+      zipkin:
+        endpoint: http://zipkin:9411/api/v2/spans
+
 
 app:
   name: ${APP_NAME:notification-platform}
   version: ${APP_VERSION:dev}
+  security:
+    jwt:
+      secret: "CHANGE_ME_TO_LONG_RANDOM_SECRET_32+_CHARS"
+      ttl-minutes: 120
 
 spring:
   datasource:
@@ -21,17 +46,11 @@ spring:
     port: 5672
     username: guest
     password: guest
+    template:
+      observation-enabled: true
     listener:
       simple:
         acknowledge-mode: manual
         prefetch: 5
         default-requeue-rejected: false
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
+        observation-enabled: true
