@@ -1,11 +1,14 @@
 package com.example.notificationplatform.notification.service.delivery;
 
 import com.example.notificationplatform.config.RabbitConfig;
+import com.example.notificationplatform.infrastructure.metrics.NotificationMetrics;
 import com.example.notificationplatform.messaging.producer.DeliveryPublisher;
 import com.example.notificationplatform.messaging.producer.DeliveryRequestMessage;
 import com.example.notificationplatform.messaging.producer.NotificationFailedMessage;
 import com.example.notificationplatform.notification.domain.Notification;
 import com.example.notificationplatform.notification.repo.NotificationRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -27,6 +30,9 @@ public class NotificationDeliveryService {
     private final RabbitTemplate rabbitTemplate;
     private final NotificationSenderRegistry senderRegistry;
 
+    private final NotificationMetrics metrics;
+    private final MeterRegistry meterRegistry;
+
     @Transactional
     public void deliver(UUID notificationId) {
         Notification n = notificationRepository.findById(notificationId)
@@ -36,16 +42,19 @@ public class NotificationDeliveryService {
 
         n.markSending();
 
+        Timer.Sample sample = Timer.start(meterRegistry);
         try {
             senderRegistry
                     .get(n.getChannel())
                     .send(n);
 
             n.markSent();
+            metrics.incSent();
         } catch (Exception e) {
             String err = e.getMessage();
             if (n.getRetryCount() + 1 < MAX_RETRIES) {
                 n.markRetrying(err);
+                metrics.incRetry();
                 rabbitTemplate.convertAndSend(
                         RabbitConfig.DELIVERY_RETRY_QUEUE,
                         new DeliveryRequestMessage(n.getId())
@@ -53,16 +62,18 @@ public class NotificationDeliveryService {
             } else {
                 n.incrementRetry(err);
                 n.markFailed(err);
-                n.markFailed(e.getMessage());
-                rabbitTemplate.convertAndSend(DELIVERY_DLQ_QUEUE,
-                        NotificationFailedMessage.of(n.getId(), err, n.getRetryCount()));
-                log.error(
-                        "Notification {} moved to DLQ after {} retries. Reason={}",
-                        n.getId(),
-                        n.getRetryCount(),
-                        err
+                metrics.incFailed();
+
+                rabbitTemplate.convertAndSend(
+                        DELIVERY_DLQ_QUEUE,
+                        NotificationFailedMessage.of(n.getId(), err, n.getRetryCount())
                 );
+
+                log.error("Notification {} moved to DLQ after {} retries. Reason={}",
+                        n.getId(), n.getRetryCount(), err);
             }
+        } finally {
+            sample.stop(meterRegistry.timer("delivery.duration"));
         }
     }
 }
