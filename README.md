@@ -35,7 +35,7 @@ DeliveryConsumer -> NotificationDeliveryService -> Channel sender (email/webhook
 ```
 
 ## Tech stack
-- Java 17, Spring Boot 3
+- Java, Spring Boot 3
 - Spring Data JPA, Flyway
 - PostgreSQL 16
 - RabbitMQ 3
