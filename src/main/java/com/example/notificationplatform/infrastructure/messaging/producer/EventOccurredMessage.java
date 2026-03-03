@@ -7,7 +7,7 @@ public record EventOccurredMessage(
         String eventType,
         String entityId,
         Instant occurredAt,
-        Map<String, Object> payload
+        Map<String, Object> payload,
+        String correlationId
 ) {
 }
-

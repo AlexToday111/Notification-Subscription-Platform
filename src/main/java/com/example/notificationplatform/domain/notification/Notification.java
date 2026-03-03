@@ -63,13 +63,19 @@ public class Notification {
     @Column(name = "retry_count", nullable = false)
     private int retryCount;
 
+    @Column(name = "next_retry_at")
+    private Instant nextRetryAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public static Notification newFrom(AppEvent event, Subscription subscription, String content) {
+    @Column(name = "correlation_id", length = 120)
+    private String correlationId;
+
+    public static Notification newFrom(AppEvent event, Subscription subscription, String content, String correlationId) {
         if (event == null) throw new IllegalArgumentException("event is null");
         if (subscription == null) throw new IllegalArgumentException("subscription is null");
         if (content == null || content.isBlank()) throw new IllegalArgumentException("content is blank");
@@ -81,12 +87,24 @@ public class Notification {
         n.subscription = subscription;
         n.channel = subscription.getChannel();
         n.destination = subscription.getDestination();
-        n.status = NotificationStatus.NEW;
+        n.status = NotificationStatus.PENDING;
         n.content = content.trim();
         n.retryCount = 0;
         n.createdAt = Instant.now();
         n.updatedAt = n.createdAt;
+        n.correlationId = correlationId == null || correlationId.isBlank() ? null : correlationId.trim();
         return n;
+    }
+
+    public static Notification newFrom(AppEvent event, Subscription subscription, String content) {
+        return newFrom(event, subscription, content, null);
+    }
+
+    public void markQueued() {
+        if (isTerminal()) return;
+        this.status = NotificationStatus.QUEUED;
+        this.nextRetryAt = null;
+        touch();
     }
 
     public void markSent() {
@@ -99,7 +117,7 @@ public class Notification {
     }
 
     public void markRetrying(String error){
-        this.status = NotificationStatus.RETRYING;
+        this.status = NotificationStatus.RETRY_SCHEDULED;
         this.errorMessage = sanitize(error);
         touch();
     }
@@ -123,13 +141,39 @@ public class Notification {
         if (isSent()) return;
         this.status = NotificationStatus.FAILED;
         this.errorMessage = sanitize(error);
+        this.nextRetryAt = null;
         touch();
     }
 
     public void registerRetry(String error) {
         this.retryCount++;
-        this.status = NotificationStatus.RETRYING;
+        this.status = NotificationStatus.RETRY_SCHEDULED;
         this.errorMessage = sanitize(error);
+        touch();
+    }
+
+    public void scheduleRetry(String error, Instant nextRetryAt) {
+        if (isTerminal()) return;
+        this.retryCount++;
+        this.status = NotificationStatus.RETRY_SCHEDULED;
+        this.errorMessage = sanitize(error);
+        this.nextRetryAt = nextRetryAt;
+        touch();
+    }
+
+    public void markDeadLettered(String error) {
+        if (isSent()) return;
+        this.status = NotificationStatus.DEAD_LETTERED;
+        this.errorMessage = sanitize(error);
+        this.nextRetryAt = null;
+        touch();
+    }
+
+    public void resetForManualRetry() {
+        if (this.status == NotificationStatus.SENT) return;
+        this.status = NotificationStatus.QUEUED;
+        this.errorMessage = null;
+        this.nextRetryAt = null;
         touch();
     }
 
@@ -144,7 +188,7 @@ public class Notification {
     public void registerFailureAndRetry(String error) {
         if (isSent()) return;
         this.retryCount++;
-        this.status = NotificationStatus.RETRYING;
+        this.status = NotificationStatus.RETRY_SCHEDULED;
         this.errorMessage = sanitize(error);
         touch();
     }
