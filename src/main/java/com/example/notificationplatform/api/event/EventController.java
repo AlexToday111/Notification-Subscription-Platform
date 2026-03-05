@@ -1,12 +1,12 @@
 package com.example.notificationplatform.api.event;
 
-import com.example.notificationplatform.api.event.dto.AppEventResponse;
+import com.example.notificationplatform.api.event.dto.PublishEventResponse;
 import com.example.notificationplatform.api.event.dto.PublishEventRequest;
-import com.example.notificationplatform.api.event.mapper.AppEventMapper;
-import com.example.notificationplatform.domain.event.AppEvent;
+import com.example.notificationplatform.application.event.EventPublishResult;
 import com.example.notificationplatform.application.event.EventService;
 import com.example.notificationplatform.application.event.command.PublishEventCommand;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,19 +23,36 @@ public class EventController {
     }
 
     @PostMapping
-    public ResponseEntity<AppEventResponse> publish(@Valid @RequestBody PublishEventRequest req) {
+    public ResponseEntity<PublishEventResponse> publish(@Valid @RequestBody PublishEventRequest req) {
 
         PublishEventCommand cmd = new PublishEventCommand(
                 req.type(),
                 req.payload(),
-                req.source()
+                req.source(),
+                req.externalEventId(),
+                req.producer()
         );
 
-        AppEvent created = eventService.publish(cmd);
+        EventPublishResult result = eventService.publish(cmd);
+        var event = result.appEvent();
+        var incoming = result.incomingEvent();
+        PublishEventResponse body = new PublishEventResponse(
+                event == null ? null : event.getId(),
+                incoming.getId(),
+                incoming.getExternalEventId(),
+                incoming.getProducer(),
+                incoming.getType(),
+                incoming.getPayload(),
+                event == null ? null : event.getSource(),
+                event == null ? null : event.getCreatedAt(),
+                result.duplicate(),
+                incoming.getStatus().name()
+        );
 
-        return ResponseEntity
-                .created(URI.create("/api/events/" + created.getId()))
-                .body(AppEventMapper.toResponse(created));
+        if (result.duplicate()) {
+            return ResponseEntity.status(HttpStatus.OK).body(body);
+        }
+        return ResponseEntity.created(URI.create("/api/events/" + event.getId())).body(body);
     }
 
 }

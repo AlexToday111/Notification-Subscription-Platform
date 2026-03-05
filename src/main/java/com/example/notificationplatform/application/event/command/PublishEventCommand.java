@@ -5,5 +5,7 @@ import com.example.notificationplatform.domain.event.EventType;
 public record PublishEventCommand(
         EventType type,
         String payload,
-        String source
+        String source,
+        String externalEventId,
+        String producer
 ) { }

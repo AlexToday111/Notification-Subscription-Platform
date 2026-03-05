@@ -8,5 +8,7 @@ import jakarta.validation.constraints.Size;
 public record PublishEventRequest(
         @NotNull EventType type,
         @NotBlank String payload,
-        @Size(max = 64) String source
+        @Size(max = 64) String source,
+        @Size(max = 160) String externalEventId,
+        @Size(max = 120) String producer
 ) {}
