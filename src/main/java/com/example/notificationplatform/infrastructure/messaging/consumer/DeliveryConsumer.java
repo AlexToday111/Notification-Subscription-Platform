@@ -3,6 +3,7 @@ package com.example.notificationplatform.infrastructure.messaging.consumer;
 import com.example.notificationplatform.infrastructure.messaging.producer.DeliveryRequestMessage;
 import com.example.notificationplatform.application.notification.NotificationDeliveryService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,13 @@ public class DeliveryConsumer {
 
     @RabbitListener(queues = "delivery")
     public void consume(DeliveryRequestMessage message) {
-        deliveryService.deliver(message.notificationId());
+        try {
+            if (message.correlationId() != null) {
+                MDC.put("correlationId", message.correlationId());
+            }
+            deliveryService.deliver(message.notificationId());
+        } finally {
+            MDC.remove("correlationId");
+        }
     }
 }

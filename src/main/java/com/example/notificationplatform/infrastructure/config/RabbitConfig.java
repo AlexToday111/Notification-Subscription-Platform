@@ -48,7 +48,6 @@ public class RabbitConfig {
     @Bean
     public Queue deliveryRetryQueue() {
         return QueueBuilder.durable(DELIVERY_RETRY_QUEUE)
-                .withArgument("x-message-ttl", 10_000)
                 .withArgument("x-dead-letter-exchange", "")
                 .withArgument("x-dead-letter-routing-key", DELIVERY_QUEUE)
                 .build();
@@ -83,5 +82,4 @@ public class RabbitConfig {
         return factory;
     }
 }
-
 

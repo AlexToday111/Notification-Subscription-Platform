@@ -21,6 +21,9 @@ public final class NotificationMapper {
                 n.getDestination(),
                 n.getStatus(),
                 n.getContent(),
+                n.getErrorMessage(),
+                n.getRetryCount(),
+                n.getCorrelationId(),
                 n.getCreatedAt()
         );
     }

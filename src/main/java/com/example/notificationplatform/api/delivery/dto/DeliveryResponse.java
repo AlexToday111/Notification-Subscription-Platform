@@ -1,4 +1,4 @@
-package com.example.notificationplatform.api.notification.dto;
+package com.example.notificationplatform.api.delivery.dto;
 
 import com.example.notificationplatform.domain.notification.NotificationStatus;
 import com.example.notificationplatform.domain.subscription.Channel;
@@ -6,17 +6,18 @@ import com.example.notificationplatform.domain.subscription.Channel;
 import java.time.Instant;
 import java.util.UUID;
 
-public record NotificationResponse(
+public record DeliveryResponse(
         UUID id,
         UUID userId,
         UUID eventId,
-        UUID subscriptionId,
         Channel channel,
         String destination,
         NotificationStatus status,
-        String content,
-        String errorMessage,
         int retryCount,
+        Instant nextRetryAt,
+        String errorMessage,
         String correlationId,
-        Instant createdAt
-) {}
+        Instant createdAt,
+        Instant updatedAt
+) {
+}
