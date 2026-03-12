@@ -66,8 +66,13 @@ public class Subscription {
         this.active = true;
         this.createdAt = Instant.now();
     }
-    public void deactive(){
+    public void deactivate(){
         this.active = false;
+    }
+
+    @Deprecated(forRemoval = false)
+    public void deactive(){
+        deactivate();
     }
     public void activate(){
         this.active = true;

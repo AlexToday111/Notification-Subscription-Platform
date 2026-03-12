@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.UUID;
 
 @Getter
@@ -46,7 +47,7 @@ public class User {
 
     private static String normalizeEmail(String email){
         if (email == null) throw new IllegalArgumentException("email is null");
-        return email.trim().toLowerCase();
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     public void rename(String newName){

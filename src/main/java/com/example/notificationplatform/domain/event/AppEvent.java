@@ -27,7 +27,7 @@ public class AppEvent {
     @Column(name = "type", nullable = false, length = 64)
     private EventType type;
 
-    @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
+    @Column(name = "payload", nullable = false, length = 4000)
     private String payload;
 
     @Column(name = "source", nullable = false, length = 64)
