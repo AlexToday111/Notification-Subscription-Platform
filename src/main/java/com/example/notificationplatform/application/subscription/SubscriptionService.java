@@ -53,6 +53,6 @@ public class SubscriptionService {
     @Transactional(Transactional.TxType.SUPPORTS)
     public List<Subscription> listByUser(UUID userId) {
         if (userId == null) throw new IllegalArgumentException("userId is null");
-        return subscriptionRepository.findByUserId(userId);
+        return subscriptionRepository.findByUser_IdOrderByCreatedAtDesc(userId);
     }
 }
