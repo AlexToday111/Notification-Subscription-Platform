@@ -1,20 +1,30 @@
 # Notification Subscription Platform
 
-## Project overview
-Event-driven platform that accepts application events, persists them, and delivers notifications to subscribed users via multiple channels (email, webhook, telegram). The API is intentionally thin, while business logic lives in services and message consumers.
+<p align="center">
+  <img src="docs/assets/logo-placeholder-300x300.svg" alt="Место под логотип 300x300" width="300" height="300">
+</p>
 
-## Architecture (event-driven)
-The system is split into layers:
-- api: HTTP controllers, DTOs, and error handling
-- application: use-cases and orchestration
-- domain: entities and domain rules
-- infrastructure: persistence, messaging, security, metrics
+## Обзор проекта
+Платформа уведомлений, построенная вокруг событий. Приложение принимает события от внешних систем, сохраняет их, генерирует уведомления по активным подпискам и доставляет их через несколько каналов: `email`, `webhook`, `telegram`.
 
-Key infrastructure components are PostgreSQL (data), RabbitMQ (event bus + delivery queues), and Micrometer/Prometheus/Grafana (metrics). Zipkin is wired for tracing.
+API в проекте намеренно тонкий: HTTP-слой отвечает за приём и валидацию запросов, а основная бизнес-логика сосредоточена в сервисах и потребителях сообщений.
 
-## Event flow (ASCII)
-```
-Client
+## Архитектура
+Система разделена на несколько слоёв:
+- `api`: REST-контроллеры, DTO, мапперы и обработка ошибок
+- `application`: use case-сервисы и orchestration-логика
+- `domain`: сущности, перечисления и доменные правила
+- `infrastructure`: persistence, messaging, security, metrics и внешние интеграции
+
+Ключевые инфраструктурные компоненты:
+- PostgreSQL: хранение пользователей, событий, подписок и уведомлений
+- RabbitMQ: шина событий и очереди доставки
+- Micrometer + Prometheus + Grafana: метрики и визуализация
+- Zipkin: distributed tracing
+
+## Поток обработки событий
+```text
+Клиент
   | POST /api/events
   v
 EventService -> PostgreSQL (events)
@@ -34,38 +44,58 @@ RabbitMQ (delivery queue)
 DeliveryConsumer -> NotificationDeliveryService -> Channel sender (email/webhook/telegram)
 ```
 
-## Tech stack
-- Java, Spring Boot 3
+## Технологический стек
+- Java 17
+- Spring Boot 3
 - Spring Data JPA, Flyway
 - PostgreSQL 16
 - RabbitMQ 3
-- Micrometer + Prometheus + Grafana
-- Zipkin (tracing)
+- Micrometer, Prometheus, Grafana
+- Zipkin
 - Spring Security + JWT
 
-## How to run (docker-compose)
-1) Build and start services:
-```
+## Быстрый запуск через Docker Compose
+1. Соберите и запустите сервисы:
+```bash
 docker-compose up --build
 ```
-2) App is available at `http://localhost:8080`
-3) RabbitMQ management UI: `http://localhost:15672` (guest/guest)
-4) Prometheus: `http://localhost:9090`
-5) Grafana: `http://localhost:3000`
-6) Zipkin: `http://localhost:9411`
+2. Приложение будет доступно по адресу `http://localhost:8080`
+3. RabbitMQ management UI: `http://localhost:15672` (`guest/guest`)
+4. Prometheus: `http://localhost:9090`
+5. Grafana: `http://localhost:3000`
+6. Zipkin: `http://localhost:9411`
 
-Auth endpoint (demo credentials):
-- `POST /auth/login` with `{"username":"user","password":"user"}` or `{"username":"admin","password":"admin"}`
+## Аутентификация
+Демо-эндпоинт:
+- `POST /auth/login`
 
-## Observability
-- Health: `GET /actuator/health`
-- Metrics: `GET /actuator/prometheus`
-- Delivery timing: `delivery.duration` timer
-- Custom counters: sent, retry, failed
+Демо-учётные данные:
+- `{"username":"user","password":"user"}`
+- `{"username":"admin","password":"admin"}`
 
-## Future improvements
-- Add Testcontainers for full integration tests with Postgres/RabbitMQ
-- Add idempotency for event ingestion and delivery
-- Exponential backoff strategy for retries
-- Real channel integrations (SMTP, Telegram API, Webhooks with retries)
-- Role-based access per resource and audit logging
+В ответе сервис возвращает JWT-токен, который нужно передавать в `Authorization: Bearer <token>`.
+
+## Основные API-эндпоинты
+- `POST /api/events`: публикация события
+- `POST /api/subscriptions`: создание подписки
+- `GET /api/users/{userId}/subscriptions`: список подписок пользователя
+- `GET /api/users/{userId}/notifications`: список уведомлений пользователя
+- `GET /actuator/health`: health-check
+- `GET /actuator/prometheus`: метрики в формате Prometheus
+
+## Наблюдаемость
+- health endpoint: `GET /actuator/health`
+- метрики: `GET /actuator/prometheus`
+- таймер времени доставки: `delivery.duration`
+- кастомные счётчики: `notifications.sent.count`, `notifications.retry.count`, `notifications.failed.count`
+
+## Подробная документация
+Архитектурные детали вынесены в отдельную папку:
+- [docs/architecture/README.md](docs/architecture/README.md)
+
+## Возможные улучшения
+- Добавить Testcontainers для полноценных интеграционных тестов с Postgres и RabbitMQ
+- Добавить идемпотентность на приём событий и на доставку
+- Ввести экспоненциальный backoff для retry
+- Подключить реальные интеграции каналов: SMTP, Telegram API, Webhook retry
+- Добавить более детальную RBAC-модель и audit logging
