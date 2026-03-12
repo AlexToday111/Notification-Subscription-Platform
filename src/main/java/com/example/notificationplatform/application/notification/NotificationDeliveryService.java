@@ -22,7 +22,6 @@ import java.util.UUID;
 public class NotificationDeliveryService {
 
     private static final int MAX_RETRIES = 5;
-    private static final String DELIVERY_DLQ_QUEUE = "delivery.dlq";
 
     private final NotificationRepository notificationRepository;
     private final RabbitTemplate rabbitTemplate;
@@ -36,7 +35,9 @@ public class NotificationDeliveryService {
         Notification n = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new IllegalArgumentException("Notification not found: " + notificationId));
 
-        if (n.isSent()) return;
+        if (n.isTerminal()) {
+            return;
+        }
 
         n.markSending();
 
@@ -49,9 +50,11 @@ public class NotificationDeliveryService {
             n.markSent();
             metrics.incSent();
         } catch (Exception e) {
-            String err = e.getMessage();
+            String err = (e.getMessage() == null || e.getMessage().isBlank())
+                    ? e.getClass().getSimpleName()
+                    : e.getMessage();
             if (n.getRetryCount() + 1 < MAX_RETRIES) {
-                n.markRetrying(err);
+                n.registerRetry(err);
                 metrics.incRetry();
                 rabbitTemplate.convertAndSend(
                         RabbitConfig.DELIVERY_RETRY_QUEUE,
@@ -63,7 +66,7 @@ public class NotificationDeliveryService {
                 metrics.incFailed();
 
                 rabbitTemplate.convertAndSend(
-                        DELIVERY_DLQ_QUEUE,
+                        RabbitConfig.DELIVERY_DLQ_QUEUE,
                         NotificationFailedMessage.of(n.getId(), err, n.getRetryCount())
                 );
 

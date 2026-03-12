@@ -3,6 +3,7 @@ package com.example.notificationplatform.application.notification;
 import com.example.notificationplatform.domain.event.AppEvent;
 import com.example.notificationplatform.domain.event.EventType;
 import com.example.notificationplatform.infrastructure.persistence.event.AppEventRepository;
+import com.example.notificationplatform.infrastructure.messaging.producer.DeliveryPublisher;
 import com.example.notificationplatform.infrastructure.messaging.producer.EventOccurredMessage;
 import com.example.notificationplatform.domain.notification.Notification;
 import com.example.notificationplatform.infrastructure.persistence.notification.NotificationRepository;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class NotificationGeneratorService {
@@ -23,17 +25,20 @@ public class NotificationGeneratorService {
     private final AppEventRepository eventRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final NotificationRepository notificationRepository;
+    private final DeliveryPublisher deliveryPublisher;
     private final ObjectMapper objectMapper;
 
     public NotificationGeneratorService(
             AppEventRepository eventRepository,
             SubscriptionRepository subscriptionRepository,
             NotificationRepository notificationRepository,
+            DeliveryPublisher deliveryPublisher,
             ObjectMapper objectMapper
     ) {
         this.eventRepository = eventRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.notificationRepository = notificationRepository;
+        this.deliveryPublisher = deliveryPublisher;
         this.objectMapper = objectMapper;
     }
 
@@ -41,16 +46,20 @@ public class NotificationGeneratorService {
     public void handle(EventOccurredMessage msg) {
         if (msg == null) throw new IllegalArgumentException("msg is null");
         EventType type = EventType.from(msg.eventType());
-        String payload = serializePayload(msg.payload());
+        AppEvent event = resolveEvent(msg, type);
 
-        AppEvent saved = eventRepository.save(new AppEvent(type, payload, "rabbit"));
         List<Subscription> subs = subscriptionRepository.findByEventTypeAndActiveTrue(type);
+        if (subs.isEmpty()) {
+            return;
+        }
+
         List<Notification> notifications = new ArrayList<>(subs.size());
         for (Subscription sub : subs) {
-            String content = buildContent(saved, sub);
-            notifications.add(Notification.newFrom(saved, sub, content));
+            String content = buildContent(event, sub);
+            notifications.add(Notification.newFrom(event, sub, content));
         }
-        notificationRepository.saveAll(notifications);
+        List<Notification> savedNotifications = notificationRepository.saveAll(notifications);
+        savedNotifications.forEach(notification -> deliveryPublisher.publish(notification.getId()));
     }
 
     private String buildContent(AppEvent event, Subscription sub) {
@@ -67,5 +76,26 @@ public class NotificationGeneratorService {
             throw new IllegalArgumentException("payload is not serializable", e);
         }
     }
-}
 
+    private AppEvent resolveEvent(EventOccurredMessage msg, EventType type) {
+        UUID eventId = parseEventId(msg.entityId());
+        if (eventId != null) {
+            return eventRepository.findById(eventId)
+                    .orElseGet(() -> eventRepository.save(
+                            new AppEvent(type, serializePayload(msg.payload()), "rabbit")
+                    ));
+        }
+        return eventRepository.save(new AppEvent(type, serializePayload(msg.payload()), "rabbit"));
+    }
+
+    private UUID parseEventId(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(raw.trim());
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+}
