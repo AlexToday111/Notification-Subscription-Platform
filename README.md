@@ -1,7 +1,7 @@
 # Notification Subscription Platform
 
 <p align="center">
-  <img src="docs/assets/logo-placeholder-300x300.svg" alt="Место под логотип 300x300" width="300" height="300">
+  <img src="docs/assets/image.png" alt="Место под логотип 300x300" width="300" height="300">
 </p>
 
 ## Обзор проекта
