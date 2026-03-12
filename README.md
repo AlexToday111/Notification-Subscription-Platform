@@ -60,10 +60,11 @@ DeliveryConsumer -> NotificationDeliveryService -> Channel sender (email/webhook
 docker-compose up --build
 ```
 2. Приложение будет доступно по адресу `http://localhost:8080`
-3. RabbitMQ management UI: `http://localhost:15672` (`guest/guest`)
-4. Prometheus: `http://localhost:9090`
-5. Grafana: `http://localhost:3000`
-6. Zipkin: `http://localhost:9411`
+3. Встроенная web-панель: `http://localhost:8080/`
+4. RabbitMQ management UI: `http://localhost:15672` (`guest/guest`)
+5. Prometheus: `http://localhost:9090`
+6. Grafana: `http://localhost:3000`
+7. Zipkin: `http://localhost:9411`
 
 ## Аутентификация
 Демо-эндпоинт:
@@ -80,6 +81,7 @@ docker-compose up --build
 - `POST /api/subscriptions`: создание подписки
 - `GET /api/users/{userId}/subscriptions`: список подписок пользователя
 - `GET /api/users/{userId}/notifications`: список уведомлений пользователя
+- `GET /`: встроенная web-панель для ручной проверки API
 - `GET /actuator/health`: health-check
 - `GET /actuator/prometheus`: метрики в формате Prometheus
 
