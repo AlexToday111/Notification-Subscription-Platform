@@ -24,6 +24,7 @@
     <!-- ===== Java ===== -->
     <properties>
         <java.version>17</java.version>
+        <maven.compiler.release></maven.compiler.release>
     </properties>
 
     <!-- ===== Dependencies ===== -->
