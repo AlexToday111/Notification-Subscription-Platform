@@ -9,6 +9,6 @@ public record CreateSubscriptionCommand (
     UUID userId,
     EventType eventType,
     Channel channel,
-    String destination
+    String destination,
+    String conditionJson
 ){}
-

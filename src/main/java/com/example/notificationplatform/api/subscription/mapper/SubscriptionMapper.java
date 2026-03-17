@@ -14,8 +14,10 @@ public final class SubscriptionMapper {
                 s.getEventType(),
                 s.getChannel(),
                 s.getDestination(),
+                s.getConditionJson(),
                 s.isActive(),
-                s.getCreatedAt()
+                s.getCreatedAt(),
+                s.getUpdatedAt()
         );
     }
 }

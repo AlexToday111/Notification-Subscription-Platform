@@ -42,13 +42,19 @@ public class Subscription {
     @Column(name = "destination", nullable = false, length = 512)
     private String destination;
 
+    @Column(name = "condition_json", columnDefinition = "text")
+    private String conditionJson;
+
     @Column(name = "active", nullable = false)
     private boolean active;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    public Subscription(User user, EventType eventType, Channel channel, String destination){
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    public Subscription(User user, EventType eventType, Channel channel, String destination, String conditionJson){
         if (user == null) throw new IllegalArgumentException("user is null");
         if (eventType == null) throw new IllegalArgumentException("eventType is null");
         if (channel == null) throw new IllegalArgumentException("channel is null");
@@ -63,11 +69,18 @@ public class Subscription {
         this.eventType = eventType;
         this.channel = channel;
         this.destination = dest;
+        this.conditionJson = normalizeCondition(conditionJson);
         this.active = true;
         this.createdAt = Instant.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    public Subscription(User user, EventType eventType, Channel channel, String destination){
+        this(user, eventType, channel, destination, null);
     }
     public void deactivate(){
         this.active = false;
+        this.updatedAt = Instant.now();
     }
 
     @Deprecated(forRemoval = false)
@@ -76,5 +89,18 @@ public class Subscription {
     }
     public void activate(){
         this.active = true;
+        this.updatedAt = Instant.now();
+    }
+
+    public void updateCondition(String conditionJson) {
+        this.conditionJson = normalizeCondition(conditionJson);
+        this.updatedAt = Instant.now();
+    }
+
+    private String normalizeCondition(String conditionJson) {
+        if (conditionJson == null || conditionJson.isBlank()) {
+            return null;
+        }
+        return conditionJson.trim();
     }
 }

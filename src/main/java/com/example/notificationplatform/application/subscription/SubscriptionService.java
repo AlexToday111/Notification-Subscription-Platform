@@ -1,5 +1,7 @@
 package com.example.notificationplatform.application.subscription;
 
+import com.example.notificationplatform.application.audit.AuditService;
+import com.example.notificationplatform.application.rules.RuleMatcher;
 import com.example.notificationplatform.domain.subscription.Subscription;
 import com.example.notificationplatform.infrastructure.persistence.subscription.SubscriptionRepository;
 import com.example.notificationplatform.application.subscription.command.CreateSubscriptionCommand;
@@ -17,11 +19,17 @@ public class SubscriptionService {
 
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final RuleMatcher ruleMatcher;
+    private final AuditService auditService;
 
     public SubscriptionService(UserRepository userRepository,
-                               SubscriptionRepository subscriptionRepository) {
+                               SubscriptionRepository subscriptionRepository,
+                               RuleMatcher ruleMatcher,
+                               AuditService auditService) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.ruleMatcher = ruleMatcher;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -39,15 +47,19 @@ public class SubscriptionService {
         if (!cmd.channel().isValidDestination(destination)) {
             throw new IllegalArgumentException("Invalid destination for channel " + cmd.channel());
         }
+        ruleMatcher.validate(cmd.conditionJson());
 
         Subscription entity = new Subscription(
                 user,
                 cmd.eventType(),
                 cmd.channel(),
-                destination
+                destination,
+                cmd.conditionJson()
         );
 
-        return subscriptionRepository.save(entity);
+        Subscription saved = subscriptionRepository.save(entity);
+        auditService.record("SUBSCRIPTION_CREATED", "Subscription", saved.getId().toString(), "eventType=" + saved.getEventType());
+        return saved;
     }
 
     @Transactional(Transactional.TxType.SUPPORTS)

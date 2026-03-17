@@ -31,7 +31,8 @@ public class SubscriptionController {
                 req.userId(),
                 req.eventType(),
                 req.channel(),
-                req.destination()
+                req.destination(),
+                req.conditionJson()
         );
 
         Subscription created = subscriptionService.create(cmd);

@@ -12,6 +12,7 @@ public record CreateSubscriptionRequest(
         @NotNull UUID userId,
         @NotNull EventType eventType,
         @NotNull Channel channel,
-        @NotBlank @Size(max = 512) String destination
+        @NotBlank @Size(max = 512) String destination,
+        String conditionJson
 ) {
 }

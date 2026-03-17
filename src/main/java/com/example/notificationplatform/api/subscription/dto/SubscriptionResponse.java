@@ -12,6 +12,8 @@ public record SubscriptionResponse(
         EventType eventType,
         Channel channel,
         String destination,
+        String conditionJson,
         boolean active,
-        Instant createdAt
+        Instant createdAt,
+        Instant updatedAt
 ) {}
