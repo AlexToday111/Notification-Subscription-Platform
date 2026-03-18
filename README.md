@@ -44,6 +44,29 @@ RabbitMQ (delivery queue)
 DeliveryConsumer -> NotificationDeliveryService -> Channel sender (email/webhook/telegram)
 ```
 
+## Архитектурная диаграмма
+
+```mermaid
+flowchart LR
+    Client[Клиент / Система] --> API[API]
+
+    API --> DB[(PostgreSQL)]
+    API --> MQ[(RabbitMQ)]
+
+    MQ --> Processor[Обработка событий\nи генерация уведомлений]
+
+    Processor --> DB
+    Processor --> Delivery[Доставка уведомлений]
+
+    Delivery --> Email[Email]
+    Delivery --> Telegram[Telegram]
+    Delivery --> Webhook[Webhook]
+
+    User <-->|получает| Email
+    User <-->|получает| Telegram
+    Client <-->|получает| Webhook
+```
+
 ## Технологический стек
 - Java 17
 - Spring Boot 3
