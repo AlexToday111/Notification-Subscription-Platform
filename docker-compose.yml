@@ -24,14 +24,17 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
 
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: notification-app
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/notification
       SPRING_DATASOURCE_USERNAME: notification
@@ -43,8 +46,23 @@ services:
 
       APP_NAME: notification-platform
       APP_VERSION: 0.0.1
+      APP_EMAIL_FROM: no-reply@notification-platform.local
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: 1025
+      APP_TELEGRAM_BOT_TOKEN: ${APP_TELEGRAM_BOT_TOKEN:-}
+      APP_WEBHOOK_SECRET: ${APP_WEBHOOK_SECRET:-local-webhook-secret}
+      LOG_FILE: /var/log/notification-platform/notification-platform.json
     ports:
       - "8080:8080"
+    volumes:
+      - app_logs:/var/log/notification-platform
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      mailpit:
+        condition: service_started
   prometheus:
     image: prom/prometheus:latest
     ports:
@@ -68,6 +86,39 @@ services:
     ports:
       - "9411:9411"
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.2
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    volumes:
+      - ./infra/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - app_logs:/var/log/notification-platform:ro
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.2
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
 volumes:
   pgdata:
   grafana_data:
+  app_logs:
+  elasticsearch_data:
