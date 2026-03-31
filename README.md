@@ -1,33 +1,37 @@
-# Notification Subscription Platform
+<h1 align="center">Notification Subscription Platform</h1>
 
-Production-grade event-driven notification backend built with Java 17, Spring Boot, PostgreSQL, RabbitMQ, JWT security, Prometheus/Grafana, Zipkin tracing, and an ELK logging stack.
+<p align="center">
+  <img src="docs/assets/image.png" alt="Notification Subscription Platform logo" width="300" height="300">
+</p>
 
-The platform accepts external events, deduplicates them by producer event id, matches rule-based subscriptions, creates notifications, and delivers them through Email, Telegram, or signed Webhook channels with retry, exponential backoff, delivery attempts, manual requeue, DLQ, metrics, tracing, structured logs, RBAC, audit log, and local Docker infrastructure.
+Production-grade backend-платформа уведомлений на Java 17 и Spring Boot: приём событий, идемпотентная обработка, rule-based subscriptions, надёжная доставка по каналам, retry/DLQ, аудит, метрики, tracing и централизованное логирование через ELK.
 
-## What This Project Demonstrates
+Платформа принимает внешние события, дедуплицирует их по `producer + externalEventId`, выбирает подписки по JSON-правилам, создаёт уведомления и доставляет их через Email, Telegram или подписанный Webhook. В проекте есть transactional outbox, exponential backoff, история delivery attempts, ручной requeue, RBAC, audit log и полноценная локальная инфраструктура через Docker Compose.
 
-- Idempotent event ingestion with database-level duplicate protection.
-- Transactional outbox for reliable RabbitMQ publication.
-- Delivery lifecycle: `PENDING`, `QUEUED`, `SENDING`, `SENT`, `RETRY_SCHEDULED`, `FAILED`, `DEAD_LETTERED`.
-- Retry with exponential backoff and a dead-letter flow.
-- Real channel adapters: SMTP, Telegram Bot API, signed Webhook POST.
-- JSON rule DSL with payload-path matching.
-- User notification preferences: allowed channels, preferred channel, quiet hours, digest mode.
-- JWT RBAC for `USER`, `OPERATOR`, and `ADMIN`.
-- Audit logging for subscription, preferences, retry, and denied access workflows.
-- Micrometer metrics, Zipkin tracing, correlation IDs, and structured JSON logs.
-- Local stack with PostgreSQL, RabbitMQ, Prometheus, Grafana, Zipkin, Elasticsearch, Logstash, Kibana, and Mailpit.
+<h2 align="center">Что демонстрирует проект</h2>
 
-## Architecture Preview
+- Идемпотентный приём событий с защитой от дублей на уровне БД.
+- Transactional outbox для надёжной публикации сообщений в RabbitMQ.
+- Жизненный цикл доставки: `PENDING`, `QUEUED`, `SENDING`, `SENT`, `RETRY_SCHEDULED`, `FAILED`, `DEAD_LETTERED`.
+- Retry с exponential backoff и dead-letter flow.
+- Реальные channel adapters: SMTP, Telegram Bot API, подписанный Webhook POST.
+- JSON rule DSL с path-based доступом к payload.
+- Пользовательские настройки уведомлений: allowed channels, preferred channel, quiet hours, digest mode.
+- JWT RBAC для ролей `USER`, `OPERATOR`, `ADMIN`.
+- Audit log для подписок, preferences, retry/requeue и отказов доступа.
+- Micrometer metrics, Zipkin tracing, correlation ID и структурированные JSON-логи.
+- Локальный стек: PostgreSQL, RabbitMQ, Prometheus, Grafana, Zipkin, Elasticsearch, Logstash, Kibana и Mailpit.
+
+<h2 align="center">Архитектура</h2>
 
 ```mermaid
 flowchart LR
-    Client[External producer] --> API[Spring Boot API]
+    Client[Внешний producer] --> API[Spring Boot API]
     API --> Incoming[(incoming_events)]
     API --> Events[(events)]
     API --> Outbox[(outbox_messages)]
     Outbox --> Rabbit[(RabbitMQ)]
-    Rabbit --> Matcher[Subscription matcher]
+    Rabbit --> Matcher[Rule matcher]
     Matcher --> Notifications[(notifications)]
     Notifications --> Delivery[(delivery_attempts)]
     Delivery --> Email[SMTP / Mailpit]
@@ -36,16 +40,16 @@ flowchart LR
     API --> Audit[(audit_logs)]
 ```
 
-## Quick Start
+<h2 align="center">Быстрый старт</h2>
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-Local URLs:
+Локальные адреса:
 
-- App / demo dashboard: `http://localhost:8080`
+- Приложение / demo dashboard: `http://localhost:8080`
 - Actuator health: `http://localhost:8080/actuator/health`
 - Prometheus scrape: `http://localhost:8080/actuator/prometheus`
 - RabbitMQ management: `http://localhost:15672` (`guest/guest`)
@@ -56,7 +60,7 @@ Local URLs:
 - Elasticsearch: `http://localhost:9200`
 - Kibana: `http://localhost:5601`
 
-## Demo Auth
+<h2 align="center">Демо-аутентификация</h2>
 
 ```bash
 curl -sS -X POST http://localhost:8080/auth/login \
@@ -64,17 +68,17 @@ curl -sS -X POST http://localhost:8080/auth/login \
   -d '{"username":"operator","password":"operator"}'
 ```
 
-Demo users:
+Демо-пользователи:
 
 - `user/user` -> `ROLE_USER`
 - `operator/operator` -> `ROLE_OPERATOR`
 - `admin/admin` -> `ROLE_ADMIN`
 
-Pass the token as `Authorization: Bearer <token>`.
+JWT передаётся в заголовке `Authorization: Bearer <token>`.
 
-## Sample Flow
+<h2 align="center">Пример сценария</h2>
 
-Create a user and subscription, then publish an idempotent event:
+Создать пользователя и подписку, затем опубликовать идемпотентное событие:
 
 ```bash
 curl -X POST http://localhost:8080/api/events \
@@ -89,24 +93,24 @@ curl -X POST http://localhost:8080/api/events \
   }'
 ```
 
-Sending the same `producer + externalEventId` again returns `200 OK` with `"duplicate": true`; no extra notification is created and `events.duplicate.total` increments.
+Повторная отправка того же `producer + externalEventId` вернёт `200 OK` с `"duplicate": true`; повторное уведомление не создаётся, а метрика `events.duplicate.total` увеличивается.
 
-## Core APIs
+<h2 align="center">Основные API</h2>
 
-- `POST /api/events` - ingest an external event.
-- `POST /api/subscriptions` - create a subscription with optional `conditionJson`.
-- `GET /api/users/{userId}/subscriptions` - list user subscriptions.
-- `GET /api/users/{userId}/notifications` - notification history.
-- `GET /api/v1/users/{userId}/preferences` - view preferences.
-- `PUT /api/v1/users/{userId}/preferences` - update quiet hours, digest, channels.
-- `GET /api/v1/deliveries/{id}` - delivery state for operators.
-- `GET /api/v1/deliveries/{id}/attempts` - delivery attempt history.
-- `POST /api/v1/deliveries/{id}/retry` - manual retry/requeue.
-- `GET /api/v1/admin/dead-letter` - DLQ view.
+- `POST /api/events` - принять внешнее событие.
+- `POST /api/subscriptions` - создать подписку с опциональным `conditionJson`.
+- `GET /api/users/{userId}/subscriptions` - список подписок пользователя.
+- `GET /api/users/{userId}/notifications` - история уведомлений пользователя.
+- `GET /api/v1/users/{userId}/preferences` - просмотр preferences.
+- `PUT /api/v1/users/{userId}/preferences` - обновление quiet hours, digest и каналов.
+- `GET /api/v1/deliveries/{id}` - состояние доставки для operator/admin.
+- `GET /api/v1/deliveries/{id}/attempts` - история попыток доставки.
+- `POST /api/v1/deliveries/{id}/retry` - ручной retry/requeue.
+- `GET /api/v1/admin/dead-letter` - просмотр DLQ.
 
-## Observability
+<h2 align="center">Наблюдаемость</h2>
 
-Important metrics:
+Ключевые метрики:
 
 - `events.accepted.total`, `events.duplicate.total`
 - `notifications.created.total`
@@ -117,17 +121,17 @@ Important metrics:
 - `subscriptions.matched.total`
 - `rule.evaluation.duration`
 
-Every HTTP request gets `X-Correlation-Id` and `X-Request-Id`. The correlation id is propagated through RabbitMQ messages, delivery attempts, audit events, and structured JSON logs.
+Каждый HTTP-запрос получает `X-Correlation-Id` и `X-Request-Id`. Correlation ID пробрасывается через RabbitMQ, delivery attempts, audit events и структурированные JSON-логи.
 
-## Centralized Logging
+<h2 align="center">Централизованное логирование</h2>
 
-The app writes JSON logs to `/var/log/notification-platform/notification-platform.json`. Logstash reads that file and indexes documents into Elasticsearch as:
+Приложение пишет JSON-логи в `/var/log/notification-platform/notification-platform.json`. Logstash читает файл и индексирует документы в Elasticsearch:
 
 ```text
 notification-platform-logs-YYYY.MM.DD
 ```
 
-Useful Kibana queries:
+Полезные KQL-запросы для Kibana:
 
 ```text
 correlationId : "demo-correlation-1"
@@ -138,29 +142,29 @@ message : "Outbox publication failed"
 message : "RBAC denied"
 ```
 
-## Documentation
+<h2 align="center">Документация</h2>
 
-- [Architecture](docs/architecture.md)
-- [Event processing](docs/event-processing.md)
-- [Delivery lifecycle](docs/delivery-lifecycle.md)
+- [Архитектура](docs/architecture.md)
+- [Обработка событий](docs/event-processing.md)
+- [Жизненный цикл доставки](docs/delivery-lifecycle.md)
 - [Rule engine](docs/rule-engine.md)
-- [Channels](docs/channels.md)
-- [Security](docs/security.md)
-- [Observability](docs/observability.md)
-- [Logging](docs/logging.md)
-- [Operations](docs/operations.md)
-- [Testing](docs/testing.md)
-- [Data model](docs/data-model.md)
+- [Каналы доставки](docs/channels.md)
+- [Безопасность](docs/security.md)
+- [Наблюдаемость](docs/observability.md)
+- [Логирование](docs/logging.md)
+- [Эксплуатация](docs/operations.md)
+- [Тестирование](docs/testing.md)
+- [Модель данных](docs/data-model.md)
 - [Architecture decisions](docs/decisions)
 
-## Testing
+<h2 align="center">Тестирование</h2>
 
 ```bash
 mvn test
 ```
 
-The default test suite uses focused unit and JPA tests that run without Docker. A manual Testcontainers smoke test for PostgreSQL and RabbitMQ is included and documented in [docs/testing.md](docs/testing.md).
+Основной test suite использует focused unit и JPA-тесты, которые запускаются без Docker. В проект добавлен manual Testcontainers smoke test для PostgreSQL и RabbitMQ; он описан в [docs/testing.md](docs/testing.md).
 
-## Resume-Worthy Highlights
+<h2 align="center">Почему проект выглядит сильным для резюме</h2>
 
-This repository demonstrates backend maturity beyond CRUD: exactly-once-style ingestion semantics, transactional outbox, retry/DLQ operations, external channel integration, RBAC, auditability, production observability, structured logging, and local infrastructure that mirrors a real notification platform.
+Репозиторий демонстрирует зрелость backend-разработки за пределами CRUD: идемпотентность, transactional outbox, retry/DLQ operations, внешние каналы доставки, RBAC, auditability, production observability, structured logging и локальную инфраструктуру, близкую к реальной notification platform.
