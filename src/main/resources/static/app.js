@@ -8,12 +8,19 @@ const userForm = document.getElementById("userForm");
 const subscriptionForm = document.getElementById("subscriptionForm");
 const eventForm = document.getElementById("eventForm");
 const lookupForm = document.getElementById("lookupForm");
+const preferencesForm = document.getElementById("preferencesForm");
+const deliveryForm = document.getElementById("deliveryForm");
 
 const pingButton = document.getElementById("pingButton");
 const loadDemoButton = document.getElementById("loadDemoButton");
 const clearTokenButton = document.getElementById("clearTokenButton");
 const loadSubscriptionsButton = document.getElementById("loadSubscriptionsButton");
 const loadNotificationsButton = document.getElementById("loadNotificationsButton");
+const loadPreferencesButton = document.getElementById("loadPreferencesButton");
+const loadDeliveryButton = document.getElementById("loadDeliveryButton");
+const loadAttemptsButton = document.getElementById("loadAttemptsButton");
+const retryDeliveryButton = document.getElementById("retryDeliveryButton");
+const loadDeadLetterButton = document.getElementById("loadDeadLetterButton");
 
 const TOKEN_KEY = "notification-platform-token";
 
@@ -75,6 +82,7 @@ function safeJsonParse(text) {
 function syncUserId(userId) {
     document.getElementById("subscriptionUserId").value = userId;
     document.getElementById("lookupUserId").value = userId;
+    document.getElementById("preferencesUserId").value = userId;
 }
 
 pingButton.addEventListener("click", async () => {
@@ -92,13 +100,22 @@ pingButton.addEventListener("click", async () => {
 });
 
 loadDemoButton.addEventListener("click", () => {
-    document.getElementById("username").value = "user";
-    document.getElementById("password").value = "user";
+    document.getElementById("username").value = "operator";
+    document.getElementById("password").value = "operator";
     document.getElementById("subscriptionDestination").value = "demo@example.com";
+    document.getElementById("subscriptionConditionJson").value = JSON.stringify({
+        all: [
+            { field: "severity", op: "eq", value: "CRITICAL" },
+            { field: "service", op: "in", value: ["billing", "auth"] }
+        ]
+    }, null, 2);
+    document.getElementById("eventExternalEventId").value = `demo-event-${Date.now()}`;
     document.getElementById("eventPayload").value = JSON.stringify({
+        severity: "CRITICAL",
+        service: "billing",
         message: "Demo event from frontend"
     }, null, 2);
-    writeConsole("Demo", "Форма заполнена demo-значениями.");
+    writeConsole("Demo", "Demo values loaded.");
 });
 
 clearTokenButton.addEventListener("click", () => {
@@ -155,7 +172,8 @@ subscriptionForm.addEventListener("submit", async (event) => {
         userId: document.getElementById("subscriptionUserId").value.trim(),
         eventType: document.getElementById("subscriptionEventType").value,
         channel: document.getElementById("subscriptionChannel").value,
-        destination: document.getElementById("subscriptionDestination").value.trim()
+        destination: document.getElementById("subscriptionDestination").value.trim(),
+        conditionJson: document.getElementById("subscriptionConditionJson").value.trim() || null
     };
 
     await apiFetch("/api/subscriptions", {
@@ -172,7 +190,9 @@ eventForm.addEventListener("submit", async (event) => {
     const payload = {
         type: document.getElementById("eventType").value,
         payload: typeof normalizedPayload === "string" ? normalizedPayload : JSON.stringify(normalizedPayload),
-        source: document.getElementById("eventSource").value.trim() || "frontend-demo"
+        source: document.getElementById("eventSource").value.trim() || "frontend-demo",
+        producer: document.getElementById("eventProducer").value.trim() || "frontend-demo",
+        externalEventId: document.getElementById("eventExternalEventId").value.trim() || `ui-${Date.now()}`
     };
 
     await apiFetch("/api/events", {
@@ -191,6 +211,48 @@ loadNotificationsButton.addEventListener("click", async () => {
     await apiFetch(`/api/users/${userId}/notifications`, { method: "GET" });
 });
 
+loadPreferencesButton.addEventListener("click", async () => {
+    const userId = document.getElementById("lookupUserId").value.trim();
+    await apiFetch(`/api/v1/users/${userId}/preferences`, { method: "GET" });
+});
+
+preferencesForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const userId = document.getElementById("preferencesUserId").value.trim();
+    const channels = document.getElementById("allowedChannels").value
+        .split(",")
+        .map(value => value.trim())
+        .filter(Boolean);
+    await apiFetch(`/api/v1/users/${userId}/preferences`, {
+        method: "PUT",
+        body: JSON.stringify({
+            allowedChannels: channels,
+            preferredChannel: document.getElementById("preferredChannel").value,
+            timezone: "UTC",
+            digestMode: document.getElementById("digestMode").value
+        })
+    });
+});
+
+loadDeliveryButton.addEventListener("click", async () => {
+    const id = document.getElementById("deliveryId").value.trim();
+    await apiFetch(`/api/v1/deliveries/${id}`, { method: "GET" });
+});
+
+loadAttemptsButton.addEventListener("click", async () => {
+    const id = document.getElementById("deliveryId").value.trim();
+    await apiFetch(`/api/v1/deliveries/${id}/attempts`, { method: "GET" });
+});
+
+retryDeliveryButton.addEventListener("click", async () => {
+    const id = document.getElementById("deliveryId").value.trim();
+    await apiFetch(`/api/v1/deliveries/${id}/retry`, { method: "POST" });
+});
+
+loadDeadLetterButton.addEventListener("click", async () => {
+    await apiFetch("/api/v1/admin/dead-letter", { method: "GET" });
+});
+
 lookupForm.addEventListener("submit", (event) => {
     event.preventDefault();
     loadNotificationsButton.click();
@@ -198,5 +260,7 @@ lookupForm.addEventListener("submit", (event) => {
 
 setToken(getToken());
 document.getElementById("eventPayload").value = JSON.stringify({
+    severity: "CRITICAL",
+    service: "billing",
     message: "Hello from the built-in dashboard"
 }, null, 2);

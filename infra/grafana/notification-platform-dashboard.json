@@ -1,0 +1,36 @@
+{
+  "title": "Notification Platform",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Events accepted vs duplicates",
+      "targets": [
+        { "expr": "rate(events_accepted_total[5m])", "legendFormat": "accepted" },
+        { "expr": "rate(events_duplicate_total[5m])", "legendFormat": "duplicates" }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Delivery lifecycle",
+      "targets": [
+        { "expr": "rate(deliveries_sent_total[5m])", "legendFormat": "sent" },
+        { "expr": "rate(deliveries_retry_total[5m])", "legendFormat": "retry" },
+        { "expr": "rate(deliveries_failed_total[5m])", "legendFormat": "failed" },
+        { "expr": "rate(deliveries_deadletter_total[5m])", "legendFormat": "deadletter" }
+      ],
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Outbox pending",
+      "targets": [
+        { "expr": "outbox_pending_count", "legendFormat": "pending" }
+      ],
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 }
+    }
+  ]
+}
